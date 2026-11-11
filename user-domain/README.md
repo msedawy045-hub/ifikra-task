@@ -10,6 +10,7 @@ Modeled from the hub's user stories (FEAT-US-01, FEAT-OR-01, FEAT-ID-01..04)
 in `01 PDLC Documentation/05 Development/02 Requirements Analysis/04 User Stories`.
 
 Rules reflected in the model:
+
 - One account per person; a user becomes an actor (learner, buyer, ...) only
   at the first action that needs it, never at sign-up.
 - Every company sits inside exactly one enterprise.
@@ -21,24 +22,31 @@ Rules reflected in the model:
 **Nodes:** User, Enterprise, Company, Team, Role, Actor, Plan, Division
 
 **Relationships:**
+
 | Relationship | Meaning |
 |---|---|
 | `(Company)-[:PART_OF]->(Enterprise)` | company belongs to one enterprise |
 | `(Team)-[:PART_OF]->(Company)` | team belongs to a company |
-| `(User)-[:MEMBER_OF]->(Enterprise\|Team)` | membership |
+| `(User)-[:MEMBER_OF]->(Enterprise or Team)` | membership |
 | `(User)-[:HAS_ROLE {scope}]->(Role)` | role within a scope |
 | `(User)-[:SUBSCRIBED_TO]->(Plan)` | Free, Plus, Pro, Business |
 | `(User)-[:ACTS_AS {since}]->(Actor)` | actor taken at first action |
 | `(User)-[:CONSENTED {purpose, version, date}]->(Division)` | per-division consent |
 
-Uniqueness constraints are set on ids and names to prevent duplicates.
+Uniqueness constraints are set on ids and names to prevent duplicates
+(a `Skill` constraint exists, but no skills are loaded yet).
+
+Sample data: 30 nodes and 14 relationships (3 users, 1 enterprise,
+1 company, 1 team, 9 roles, 6 divisions, 5 actors, 4 plans).
 
 ## Vector store (ChromaDB)
 
 - Collection: `user_profiles` (cosine distance)
 - Embedding model: `paraphrase-multilingual-MiniLM-L12-v2`
-  (Arabic and English in the same space)
+  (Arabic and English in the same 384-dimensional space)
 - Documents: user profile bios; metadata: name, language
+- The store is in memory (`chromadb.Client()`), so it is rebuilt each time
+  the notebook runs.
 
 ## Hybrid search (GraphRAG, simplified)
 
@@ -46,8 +54,14 @@ Uniqueness constraints are set on ids and names to prevent duplicates.
 2. The graph filters those candidates by **relationships** (for example,
    actor = learner and consent = analytics on Academy).
 
-Example: `hybrid_search("someone learning data science")` returns only
-users who are close in meaning and also pass the graph conditions.
+Examples from the notebook:
+
+- `hybrid_search("someone learning data science")` returns **Omar**
+  (distance 0.23): close in meaning, a learner, and consented to analytics.
+- `hybrid_search("business owner looking for Python developers", actor="buyer")`
+  returns **No match**: Ahmed is close in meaning and is a buyer, but has not
+  given consent, so the graph filters him out.
+
 ## Visualizations
 
 The notebook ends with two plots:
@@ -62,19 +76,27 @@ The notebook ends with two plots:
    (design, backend/cloud, data/ML, business owners).
 
 The vector plot is a 2D projection of 384 dimensions, so distances are
-approximate. The extra profiles in the plot are for illustration only and
-are not stored in the graph.
+approximate, and with only eight points the clustering is illustrative, not
+statistical. The extra profiles in the plot are not stored in the graph.
+
 ## How to run
 
 1. Create a free instance at neo4j.com/cloud/aura-free.
 2. In Colab, add Secrets `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`
    and enable notebook access. Never commit credentials.
-3. Run the notebook top to bottom:
-   install, connect, constraints, reference data, sample data,
-   Cypher queries, vector collection, hybrid search.
+3. Run the notebook top to bottom: install, connect, constraints,
+   reference data, sample data, node counts, vector collection and profiles,
+   semantic search, hybrid search, and the two visualizations.
+
+Graph queries can also be run in the Neo4j Aura **Query** tab, for example:
+
+```cypher
+MATCH (a)-[r]->(b) RETURN a, r, b
+```
 
 ## Notes
 
-- All data is sample data for illustration.
+- All data is sample data for illustration. No credentials are stored in
+  the notebook.
 - Planned extensions: Skills, Branches and Departments, Sessions and Devices,
   and more profiles for richer semantic search.
