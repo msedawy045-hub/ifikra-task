@@ -48,7 +48,22 @@ Uniqueness constraints are set on ids and names to prevent duplicates.
 
 Example: `hybrid_search("someone learning data science")` returns only
 users who are close in meaning and also pass the graph conditions.
+## Visualizations
 
+The notebook ends with two plots:
+
+1. **Graph plot:** the Neo4j graph drawn with NetworkX. Each node is an
+   entity (user, role, plan, actor, division, enterprise, company, team)
+   and each labelled edge is a relationship (HAS_ROLE, MEMBER_OF, PART_OF,
+   SUBSCRIBED_TO, ACTS_AS, CONSENTED).
+2. **Vector plot:** eight sample profiles (Arabic and English) embedded
+   with the multilingual model and projected to 2D with PCA. Profiles with
+   similar meaning cluster together regardless of language
+   (design, backend/cloud, data/ML, business owners).
+
+The vector plot is a 2D projection of 384 dimensions, so distances are
+approximate. The extra profiles in the plot are for illustration only and
+are not stored in the graph.
 ## How to run
 
 1. Create a free instance at neo4j.com/cloud/aura-free.
